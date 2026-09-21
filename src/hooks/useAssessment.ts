@@ -1,21 +1,9 @@
 import { useState, useCallback } from "react";
 
-export interface UserInfo {
-  name: string;
-  className: string;
-  age: number;
-  topic: string;
-  difficulty: string;
-}
+import type { AssessmentQuestion, OfficialProfile } from "@/types/igot";
 
-export interface Question {
-  question: string;
-  options: string[];
-  correct_answer: string;
-  reasoning: string;
-}
 
-export interface QuestionResult extends Question {
+export interface QuestionResult extends AssessmentQuestion {
   user_answer: string;
   is_correct: boolean;
 }
@@ -64,8 +52,8 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 export function useAssessment() {
   const [step, setStep] = useState<Step>("form");
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [userInfo, setUserInfo] = useState<OfficialProfile | null>(null);
+  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(false);
@@ -87,7 +75,7 @@ export function useAssessment() {
     return res.json();
   }, []);
 
-  const startAssessment = useCallback(async (info: UserInfo) => {
+  const startAssessment = useCallback(async (info: OfficialProfile) => {
     setLoading(true);
     setError(null);
     try {
