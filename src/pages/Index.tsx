@@ -29,7 +29,7 @@ const Index = () => {
     case "form":
       return <UserInfoForm onSubmit={startAssessment} loading={loading} />;
     case "quiz":
-      return <QuizView questions={questions} onSubmit={submitAnswers} loading={loading} topic={userInfo?.topic || ""} />;
+      return <QuizView questions={questions} onSubmit={submitAnswers} loading={loading} topic={userInfo?.role || ""} />;
     case "results":
       return evaluationResult ? (
         <ResultsView data={evaluationResult} onGenerateRoadmap={generateRoadmap} loading={loading} />
