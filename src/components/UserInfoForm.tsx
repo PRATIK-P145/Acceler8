@@ -1,7 +1,9 @@
 import { useState } from "react";
 import type { OfficialProfile } from "@/types/igot";
+import { getSupportedRoles } from "@/data/competencyFramework";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BriefcaseBusiness, Sparkles } from "lucide-react";
@@ -91,7 +93,16 @@ export default function UserInfoForm({ onSubmit, loading }: Props) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="role">Job Role</Label>
-                  <Input id="role" value={form.role} onChange={e => update("role", e.target.value)} placeholder="e.g., Survey & Data Analyst" className="mt-1.5" />
+                  <Select value={form.role} onValueChange={value => update("role", value)}>
+                    <SelectTrigger id="role" className="mt-1.5">
+                      <SelectValue placeholder="Select your job role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {getSupportedRoles().map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {errors.role && <p className="text-sm text-destructive mt-1">{errors.role}</p>}
                 </div>
                 <div>
