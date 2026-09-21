@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 
 import type { AssessmentQuestion, OfficialProfile } from "@/types/igot";
+import { getCompetenciesForRole } from "@/data/competencyFramework";
 
 
 export interface QuestionResult extends AssessmentQuestion {
@@ -31,6 +32,7 @@ export interface CategorySummary {
 }
 
 export interface EvaluationResult {
+  userInfo: OfficialProfile;
   results: QuestionResult[];
   score: number;
   correct: number;
@@ -100,7 +102,15 @@ export function useAssessment() {
     setError(null);
     try {
       setUserInfo(info);
-      const data = await callFunction("generate-questions", info);
+      const competencies = getCompetenciesForRole(info.role);
+      if (competencies.length === 0) {
+        throw new Error("This role is not yet supported by the competency framework. Please select Statistical Data Analyst.");
+      }
+      const data = await callFunction("generate-questions", {
+        profile: info,
+        role: info.role,
+        competencies,
+      });
       setQuestions(data.questions);
       setStep("quiz");
     } catch (e: any) {
