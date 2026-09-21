@@ -15,12 +15,32 @@ export interface Evaluation {
   suggestions: string[];
 }
 
+export interface CompetencyResult {
+  competency: string;
+  category: string;
+  currentLevel: number;
+  requiredLevel: number;
+  gap: number;
+}
+
+export interface CategorySummary {
+  category: string;
+  performance: number;
+  currentLevel: number;
+  competenciesAssessed: number;
+}
+
 export interface EvaluationResult {
   results: QuestionResult[];
   score: number;
   correct: number;
   total: number;
   evaluation: Evaluation;
+  competencyResults: CompetencyResult[];
+  categorySummaries: CategorySummary[];
+  strengths: string[];
+  priorityGaps: CompetencyResult[];
+  overallCompetencySummary: string;
 }
 
 export interface RoadmapResource {
