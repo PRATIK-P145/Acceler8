@@ -120,6 +120,11 @@ serve(async (req) => {
           }
         }
 
+        const categoriesCovered = new Set(parsed.map((q: any) => q.category));
+        if (!["Statistical", "Technical", "Digital Governance", "Behavioural & Managerial"].every((category) => categoriesCovered.has(category))) {
+          valid = false;
+        }
+
         if (valid) questions = parsed;
       } catch {
         console.error("JSON parse failed (attempt " + attempts + ")");
