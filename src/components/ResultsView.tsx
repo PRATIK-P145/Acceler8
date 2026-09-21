@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Award, CheckCircle2, CircleAlert, Target, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import CompetencyPassport from "@/components/CompetencyPassport";
 
 interface Props {
   data: EvaluationResult;
@@ -192,6 +193,8 @@ export default function ResultsView({ data, onGenerateRoadmap, loading }: Props)
             </CardContent>
           </Card>
         </div>
+
+        <CompetencyPassport />
 
         <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 sm:flex-row">
           <div>
