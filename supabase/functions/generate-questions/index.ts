@@ -94,7 +94,7 @@ serve(async (req) => {
 
       try {
         const parsed = JSON.parse(responseContent);
-        if (!Array.isArray(parsed) || parsed.length < 10 || parsed.length > 12) continue;
+        if (!Array.isArray(parsed) || parsed.length !== count) continue;
 
         const validCompetencies = new Map(
           competencies.map((c: { name: string; category: string; requiredLevel: number }) => [c.name, c])
