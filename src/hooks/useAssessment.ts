@@ -146,8 +146,8 @@ export function useAssessment() {
     try {
       const data = await callFunction("generate-roadmap", {
         userInfo,
-        score: evaluationResult.score,
-        weaknesses: evaluationResult.evaluation.weaknesses,
+        competencyResults: evaluationResult.competencyResults,
+        priorityGaps: evaluationResult.priorityGaps,
         evaluation: evaluationResult.evaluation,
       });
       setRoadmap(data.roadmap);
