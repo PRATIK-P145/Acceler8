@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Question } from "@/hooks/useAssessment";
+import type { AssessmentQuestion } from "@/types/igot";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, Send, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Props {
-  questions: Question[];
+  questions: AssessmentQuestion[];
   onSubmit: (answers: string[]) => void;
   loading: boolean;
   topic: string;
