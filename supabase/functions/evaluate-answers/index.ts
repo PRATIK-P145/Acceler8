@@ -82,19 +82,19 @@ serve(async (req) => {
       };
     });
 
-    const categoryMap = new Map<string, { category: string; correct: number; total: number; competencies: number }>();
+    const categoryMap = new Map<string, { category: string; correct: number; total: number; competencies: Set<string> }>();
     for (const result of results) {
       const existing = categoryMap.get(result.category);
       if (existing) {
         existing.total += 1;
         if (result.is_correct) existing.correct += 1;
-        existing.competencies += existing.total === 1 ? 1 : 0;
+        existing.competencies.add(result.competency);
       } else {
         categoryMap.set(result.category, {
           category: result.category,
           correct: result.is_correct ? 1 : 0,
           total: 1,
-          competencies: 1,
+          competencies: new Set([result.competency]),
         });
       }
     }
@@ -103,7 +103,7 @@ serve(async (req) => {
       category: item.category,
       performance: Math.round((item.correct / item.total) * 100),
       currentLevel: performanceToLevel(item.correct / item.total),
-      competenciesAssessed: item.competencies,
+      competenciesAssessed: item.competencies.size,
     }));
 
     const strengths = competencyResults
