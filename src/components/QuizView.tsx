@@ -30,7 +30,7 @@ export default function QuizView({ questions, onSubmit, loading, topic }: Props)
   if (!current) return null;
 
   const categoryQuestions = questions.filter(q => q.category === current.category);
-  const positionInCategory = categoryQuestions.findIndex((q) => q === current) + 1;
+  const positionInCategory = categoryQuestions.findIndex(q => q === current) + 1;
   const progress = ((currentIndex + 1) / questions.length) * 100;
   const allAnswered = answers.length === questions.length && answers.every(a => a !== "");
 
@@ -53,7 +53,9 @@ export default function QuizView({ questions, onSubmit, loading, topic }: Props)
               <p className="text-xs font-semibold text-primary tracking-widest">
                 {categoryNumber(current.category)} / 04
               </p>
-              <h2 className="font-display font-bold text-lg text-foreground">{current.category} Competencies</h2>
+              <h2 className="font-display font-bold text-lg text-foreground">
+                {current.category} Competencies
+              </h2>
             </div>
             <span className="text-sm text-muted-foreground">
               Question {positionInCategory} of {categoryQuestions.length}
@@ -68,11 +70,17 @@ export default function QuizView({ questions, onSubmit, loading, topic }: Props)
                 return answers[index];
               }).length;
               const active = current.category === category;
+
               return (
-                <div key={category} className={cn(
-                  "rounded-lg border px-2 py-2 text-center text-xs transition-colors",
-                  active ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground"
-                )}>
+                <div
+                  key={category}
+                  className={cn(
+                    "rounded-lg border px-2 py-2 text-center text-xs transition-colors",
+                    active
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-card text-muted-foreground"
+                  )}
+                >
                   <div className="font-semibold">{categoryNumber(category)}</div>
                   <div className="truncate">{category}</div>
                   <div className="mt-1">{answered}/3</div>
@@ -82,19 +90,27 @@ export default function QuizView({ questions, onSubmit, loading, topic }: Props)
           </div>
 
           <div className="h-2 rounded-full bg-muted overflow-hidden">
-            <div className="h-full gradient-primary transition-all" style={{ width: `${progress}%` }} />
+            <div
+              className="h-full gradient-primary transition-all"
+              style={{ width: `${progress}%` }}
+            />
           </div>
-          <p className="text-xs text-muted-foreground mt-2">{currentIndex + 1} of 12 questions</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            {currentIndex + 1} of 12 questions
+          </p>
         </div>
 
         <Card className="shadow-lg border-border/50 mb-6">
           <CardHeader>
-            <CardTitle className="font-display text-xl leading-relaxed">{current.question}</CardTitle>
+            <CardTitle className="font-display text-xl leading-relaxed">
+              {current.question}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {current.options.map((opt, i) => {
               const letter = optionLetter(i);
               const isSelected = answers[currentIndex] === letter;
+
               return (
                 <button
                   type="button"
@@ -102,15 +118,25 @@ export default function QuizView({ questions, onSubmit, loading, topic }: Props)
                   onClick={() => selectAnswer(letter)}
                   className={cn(
                     "w-full text-left p-4 rounded-xl border-2 transition-all duration-200 hover:border-primary/50 hover:shadow-md",
-                    isSelected ? "border-primary bg-primary/5 shadow-glow" : "border-border bg-card"
+                    isSelected
+                      ? "border-primary bg-primary/5 shadow-glow"
+                      : "border-border bg-card"
                   )}
                 >
                   <div className="flex items-start gap-3">
-                    <span className={cn(
-                      "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
-                      isSelected ? "gradient-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    )}>{letter}</span>
-                    <span className="text-foreground pt-1">{opt.replace(/^[A-D])\s*/, "")}</span>
+                    <span
+                      className={cn(
+                        "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold",
+                        isSelected
+                          ? "gradient-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                      )}
+                    >
+                      {letter}
+                    </span>
+                    <span className="text-foreground pt-1">
+                      {opt.replace(/^[A-D]\)\s*/, "")}
+                    </span>
                   </div>
                 </button>
               );
@@ -119,7 +145,11 @@ export default function QuizView({ questions, onSubmit, loading, topic }: Props)
         </Card>
 
         <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => setCurrentIndex(i => Math.max(0, i - 1))} disabled={currentIndex === 0}>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentIndex(i => Math.max(0, i - 1))}
+            disabled={currentIndex === 0}
+          >
             <ChevronLeft className="w-4 h-4 mr-1" /> Back
           </Button>
 
@@ -128,7 +158,11 @@ export default function QuizView({ questions, onSubmit, loading, topic }: Props)
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           ) : (
-            <Button onClick={() => onSubmit(answers)} disabled={!allAnswered || loading} className="gradient-primary text-primary-foreground">
+            <Button
+              onClick={() => onSubmit(answers)}
+              disabled={!allAnswered || loading}
+              className="gradient-primary text-primary-foreground"
+            >
               {loading ? "Evaluating..." : <>Submit <Send className="w-4 h-4 ml-1" /></>}
             </Button>
           )}
