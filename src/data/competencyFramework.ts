@@ -1,5 +1,5 @@
 import type { Competency } from "@/types/igot";
-import { ROLE_PROFILES } from "./roleCompetencyData";
+import { ROLE_PROFILES, getCompetencyById } from "./roleCompetencyData";
 
 /**
  * Backwards-compatible adapter for older consumers.
@@ -10,7 +10,7 @@ export function getCompetenciesForRole(role: string): Competency[] {
   if (!profile) return [];
 
   return profile.competencies.map((item) => ({
-    name: item.competency,
+    name: getCompetencyById(item.competency)?.name ?? item.competency,
     category: item.category,
     requiredLevel: item.requiredLevel,
   }));
