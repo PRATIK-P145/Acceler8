@@ -123,7 +123,7 @@ serve(async (req) => {
       "Each object must contain: question, options, correct_answer, reasoning, competency, category, requiredLevel, difficulty.",
       "Each question must have exactly four options labeled A, B, C, D.",
       "correct_answer must be A, B, C, or D.",
-      "Use realistic official-statistics and public-sector scenarios.",
+      "Use realistic official-statistics and public-sector scenarios.",\n      "Questions must test applied judgement or role-relevant knowledge, not trivial general knowledge.",\n      "Do NOT use arithmetic warm-ups (for example 2+2), animal/color questions, generic school-level trivia, or questions unrelated to the selected competency.",\n      "The distractors must be plausible for a government/statistical professional.",\n      "Match difficulty to requiredLevel: Level 1-2 foundational, Level 3 intermediate, Level 4 advanced, Level 5 expert.",
     ].join("\n");
 
     let questions: Question[] | null = null;
