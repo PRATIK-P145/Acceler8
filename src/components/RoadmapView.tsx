@@ -2,11 +2,13 @@ import { Roadmap } from "@/hooks/useAssessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Map, Play, FileText, BookOpen, Lightbulb, RotateCcw, ExternalLink } from "lucide-react";
+import { Map, Play, FileText, BookOpen, Lightbulb, RotateCcw, ExternalLink, ArrowLeft, RefreshCw } from "lucide-react";
 
 interface Props {
   roadmap: Roadmap;
   onRestart: () => void;
+  onBackToResults: () => void;
+  onStartReassessment: () => void;
 }
 
 const resourceIcon = (type: string) => {
@@ -25,7 +27,7 @@ const resourceBadgeClass = (type: string) => {
   }
 };
 
-export default function RoadmapView({ roadmap, onRestart }: Props) {
+export default function RoadmapView({ roadmap, onRestart, onBackToResults, onStartReassessment }: Props) {
   return (
     <div className="min-h-screen gradient-surface p-4">
       <div className="max-w-3xl mx-auto pt-8 space-y-6">
@@ -123,9 +125,15 @@ export default function RoadmapView({ roadmap, onRestart }: Props) {
           </Card>
         )}
 
-        {/* Restart */}
-        <div className="text-center pb-8">
-          <Button onClick={onRestart} variant="outline" className="gap-2">
+        {/* Navigation */}
+        <div className="flex flex-col items-center justify-center gap-3 border-t border-border pt-6 pb-8 sm:flex-row">
+          <Button onClick={onBackToResults} variant="outline" className="gap-2">
+            <ArrowLeft className="w-4 h-4" /> Back to Competency Profile
+          </Button>
+          <Button onClick={onStartReassessment} className="gap-2 gradient-primary text-primary-foreground">
+            <RefreshCw className="w-4 h-4" /> Start Reassessment
+          </Button>
+          <Button onClick={onRestart} variant="ghost" className="gap-2">
             <RotateCcw className="w-4 h-4" /> Take Another Assessment
           </Button>
         </div>
