@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import type { AssessmentQuestion, OfficialProfile } from "@/types/igot";
 import { getCompetenciesForRole } from "@/data/competencyFramework";
 import { generateMockAssessmentQuestions } from "@/data/mockAssessmentQuestions";
+import { buildPersonalizedRoadmap } from "@/data/learningRoadmap";
 
 
 export interface QuestionResult extends AssessmentQuestion {
@@ -259,27 +260,7 @@ export function useAssessment() {
     }
   }, [questions, userInfo]);
 
-  const generateRoadmap = useCallback(async () => {
-    if (!userInfo || !evaluationResult) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await callFunction("generate-roadmap", {
-        userInfo,
-        competencyResults: evaluationResult.competencyResults,
-        priorityGaps: evaluationResult.priorityGaps,
-        evaluation: evaluationResult.evaluation,
-      });
-      setRoadmap(data.roadmap);
-      setStep("roadmap");
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [callFunction, userInfo, evaluationResult]);
-
-  const restart = useCallback(() => {
+  const generateRoadmap = useCallback(async () => {\n    if (!userInfo || !evaluationResult) return;\n    setLoading(true);\n    setError(null);\n    try {\n      const generatedRoadmap = buildPersonalizedRoadmap(userInfo.role, evaluationResult.priorityGaps);\n      setRoadmap(generatedRoadmap);\n      setStep("roadmap");\n    } catch (e: any) {\n      setError(e.message);\n    } finally {\n      setLoading(false);\n    }\n  }, [userInfo, evaluationResult]);\n\n  const restart = useCallback(() => {
     setStep("form");
     setUserInfo(null);
     setQuestions([]);
