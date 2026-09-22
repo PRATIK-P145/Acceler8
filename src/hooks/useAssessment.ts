@@ -69,7 +69,7 @@ export interface Roadmap {
   tips: string[];
 }
 
-type Step = "form" | "quiz" | "results" | "roadmap";
+type Step = "form" | "quiz" | "results" | "roadmap" | "reassessment";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -260,6 +260,19 @@ export function useAssessment() {
     }
   }, [questions, userInfo]);
 
+  const startReassessment = useCallback(() => {
+    if (!userInfo) return;
+    setError(null);
+    const competencies = getCompetenciesForRole(userInfo.role);
+    const reassessmentQuestions = generateMockAssessmentQuestions(competencies);
+    setQuestions(reassessmentQuestions);
+    setStep("reassessment");
+  }, [userInfo]);
+
+  const backToResults = useCallback(() => {
+    if (evaluationResult) setStep("results");
+  }, [evaluationResult]);
+
   const generateRoadmap = useCallback(async () => {
     if (!userInfo || !evaluationResult) return;
     setLoading(true);
@@ -294,6 +307,8 @@ export function useAssessment() {
     startAssessment,
     submitAnswers,
     generateRoadmap,
+    startReassessment,
+    backToResults,
     restart,
   };
 }
