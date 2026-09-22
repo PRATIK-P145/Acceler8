@@ -114,7 +114,7 @@ export const ROLE_PROFILES: Role[] = [
       ["data-privacy", 4, "High"],
       ["cybersecurity", 5, "Core"],
       ["metadata-standards", 4, "High"],
-      ["information-management", 4, "High"],
+      ["stakeholder-management", 4, "High"],
       ["communication", 4, "High"],
       ["project-management", 4, "Core"],
     ],
