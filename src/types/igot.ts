@@ -9,10 +9,11 @@ export interface OfficialProfile {
   designation: string;
   department: string;
   role: string;
-  currentAssignment: string;
-  qualification: string;
   experienceYears: number;
-  previousTraining: string;
+  /** Reserved for later profile enrichment; not collected during MVP onboarding. */
+  currentAssignment?: string;
+  qualification?: string;
+  previousTraining?: string;
 }
 
 export interface Competency {
