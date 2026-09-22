@@ -109,17 +109,7 @@ export function useAssessment() {
         throw new Error("This role is not supported by the competency framework.");
       }
 
-      const generatedQuestions = generateMockAssessmentQuestions(
-        competencies.map((competency) => ({
-          competency:
-            getCompetenciesForRole(info.role).find((item) => item.name === competency.name)?.name ??
-            competency.name,
-          category: competency.category,
-          requiredLevel: competency.requiredLevel,
-          importance: "Supporting",
-          tags: [],
-        })),
-      );
+      const generatedQuestions = generateMockAssessmentQuestions(competencies);
 
       const categories = [
         "Statistical",
