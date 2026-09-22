@@ -260,7 +260,21 @@ export function useAssessment() {
     }
   }, [questions, userInfo]);
 
-  const generateRoadmap = useCallback(async () => {\n    if (!userInfo || !evaluationResult) return;\n    setLoading(true);\n    setError(null);\n    try {\n      const generatedRoadmap = buildPersonalizedRoadmap(userInfo.role, evaluationResult.priorityGaps);\n      setRoadmap(generatedRoadmap);\n      setStep("roadmap");\n    } catch (e: any) {\n      setError(e.message);\n    } finally {\n      setLoading(false);\n    }\n  }, [userInfo, evaluationResult]);\n\n  const restart = useCallback(() => {
+  const generateRoadmap = useCallback(async () => {
+    if (!userInfo || !evaluationResult) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const generatedRoadmap = buildPersonalizedRoadmap(userInfo.role, evaluationResult.priorityGaps);
+      setRoadmap(generatedRoadmap);
+      setStep("roadmap");
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [userInfo, evaluationResult]);
+  const restart = useCallback(() => {
     setStep("form");
     setUserInfo(null);
     setQuestions([]);
