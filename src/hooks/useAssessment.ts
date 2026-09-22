@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 
 import type { AssessmentQuestion, OfficialProfile } from "@/types/igot";
 import { getCompetenciesForRole } from "@/data/competencyFramework";
+import { generateMockAssessmentQuestions } from "@/data/mockAssessmentQuestions";
 
 
 export interface QuestionResult extends AssessmentQuestion {
@@ -102,32 +103,51 @@ export function useAssessment() {
     setError(null);
     try {
       setUserInfo(info);
+
       const competencies = getCompetenciesForRole(info.role);
       if (competencies.length === 0) {
-        throw new Error("This role is not yet supported by the competency framework. Please select Statistical Data Analyst.");
+        throw new Error("This role is not supported by the competency framework.");
       }
-      const data = await callFunction("generate-questions", {
-        profile: info,
-        role: info.role,
-        competencies,
-      });
 
-      const generatedQuestions = Array.isArray(data.questions) ? data.questions : [];
-      const categories = ["Statistical", "Technical", "Digital Governance", "Behavioural & Managerial"];
+      const generatedQuestions = generateMockAssessmentQuestions(
+        competencies.map((competency) => ({
+          competency:
+            getCompetenciesForRole(info.role).find((item) => item.name === competency.name)?.name ??
+            competency.name,
+          category: competency.category,
+          requiredLevel: competency.requiredLevel,
+          importance: "Supporting",
+          tags: [],
+        })),
+      );
+
+      const categories = [
+        "Statistical",
+        "Technical",
+        "Digital Governance",
+        "Behavioural & Managerial",
+      ] as const;
+
       const validAssessment =
         generatedQuestions.length === 12 &&
-        categories.every((category) => generatedQuestions.filter((q: AssessmentQuestion) => q.category === category).length === 3) &&
-        generatedQuestions.every((q: AssessmentQuestion) =>
-          typeof q.question === "string" &&
-          Array.isArray(q.options) &&
-          q.options.length === 4 &&
-          ["A", "B", "C", "D"].includes(q.correct_answer) &&
-          typeof q.competency === "string" &&
-          typeof q.requiredLevel === "number"
+        categories.every(
+          (category) =>
+            generatedQuestions.filter((question) => question.category === category).length === 3,
+        ) &&
+        generatedQuestions.every(
+          (question) =>
+            typeof question.question === "string" &&
+            Array.isArray(question.options) &&
+            question.options.length === 4 &&
+            ["A", "B", "C", "D"].includes(question.correct_answer) &&
+            typeof question.competency === "string" &&
+            typeof question.requiredLevel === "number" &&
+            typeof question.reasoning === "string" &&
+            typeof question.difficulty === "string",
         );
 
       if (!validAssessment) {
-        throw new Error("Assessment generation returned an incomplete or invalid question set. Please retry.");
+        throw new Error("Local assessment generation returned an invalid question set. Please retry.");
       }
 
       setQuestions(generatedQuestions);
@@ -137,18 +157,109 @@ export function useAssessment() {
     } finally {
       setLoading(false);
     }
-  }, [callFunction]);
-
+  }, []);
+  
   const submitAnswers = useCallback(async (userAnswers: string[]) => {
     if (!userInfo) return;
     setLoading(true);
     setError(null);
+
     try {
-      const data = await callFunction("evaluate-answers", {
-        questions,
-        userAnswers,
-        userInfo,
+      const results: QuestionResult[] = questions.map((question, index) => ({
+        ...question,
+        user_answer: userAnswers[index] ?? "",
+        is_correct: (userAnswers[index] ?? "") === question.correct_answer,
+      }));
+
+      const correct = results.filter((result) => result.is_correct).length;
+      const total = results.length;
+      const score = total > 0 ? Math.round((correct / total) * 100) : 0;
+
+      const levelFromPerformance = (performance: number): number => {
+        if (performance >= 0.9) return 5;
+        if (performance >= 0.75) return 4;
+        if (performance >= 0.5) return 3;
+        if (performance >= 0.25) return 2;
+        return 1;
+      };
+
+      const competencyResults: CompetencyResult[] = Array.from(
+        new Set(questions.map((question) => question.competency)),
+      ).map((competency) => {
+        const competencyQuestions = results.filter((question) => question.competency === competency);
+        const competencyCorrect = competencyQuestions.filter((question) => question.is_correct).length;
+        const performance =
+          competencyQuestions.length > 0 ? competencyCorrect / competencyQuestions.length : 0;
+        const currentLevel = levelFromPerformance(performance);
+        const requiredLevel = competencyQuestions[0]?.requiredLevel ?? 1;
+
+        return {
+          competency,
+          category: competencyQuestions[0]?.category ?? "Statistical",
+          currentLevel,
+          requiredLevel,
+          gap: Math.max(requiredLevel - currentLevel, 0),
+        };
       });
+
+      const categorySummaries: CategorySummary[] = [
+        "Statistical",
+        "Technical",
+        "Digital Governance",
+        "Behavioural & Managerial",
+      ].map((category) => {
+        const categoryQuestions = results.filter((question) => question.category === category);
+        const categoryCorrect = categoryQuestions.filter((question) => question.is_correct).length;
+        const performance =
+          categoryQuestions.length > 0 ? categoryCorrect / categoryQuestions.length : 0;
+
+        return {
+          category,
+          performance: Math.round(performance * 100),
+          currentLevel: levelFromPerformance(performance),
+          competenciesAssessed: new Set(
+            categoryQuestions.map((question) => question.competency),
+          ).size,
+        };
+      });
+
+      const strengths = competencyResults
+        .filter((item) => item.gap === 0)
+        .map((item) => item.competency);
+
+      const priorityGaps = [...competencyResults]
+        .filter((item) => item.gap > 0)
+        .sort((a, b) => b.gap - a.gap || b.requiredLevel - a.requiredLevel);
+
+      const overallCompetencySummary =
+        priorityGaps.length === 0
+          ? "Your current assessed proficiency meets the defined role requirements across all assessed competencies."
+          : `The assessment identified ${priorityGaps.length} competency gap${priorityGaps.length === 1 ? "" : "s"} requiring development attention.`;
+
+      const evaluation: Evaluation = {
+        summary: overallCompetencySummary,
+        strengths,
+        weaknesses: priorityGaps.map((item) => item.competency),
+        suggestions: priorityGaps.slice(0, 5).map(
+          (item) =>
+            `Develop ${item.competency} from Level ${item.currentLevel} toward the required Level ${item.requiredLevel}.`,
+        ),
+      };
+
+      const data: EvaluationResult = {
+        userInfo,
+        results,
+        score,
+        correct,
+        total,
+        evaluation,
+        competencyResults,
+        categorySummaries,
+        strengths,
+        priorityGaps,
+        overallCompetencySummary,
+      };
+
       setEvaluationResult(data);
       setStep("results");
     } catch (e: any) {
@@ -156,7 +267,7 @@ export function useAssessment() {
     } finally {
       setLoading(false);
     }
-  }, [callFunction, questions, userInfo]);
+  }, [questions, userInfo]);
 
   const generateRoadmap = useCallback(async () => {
     if (!userInfo || !evaluationResult) return;
