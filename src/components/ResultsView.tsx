@@ -12,6 +12,7 @@ interface Props {
   data: EvaluationResult;
   onGenerateRoadmap: () => void;
   onStartReassessment: () => void;
+  assessmentHistory: { assessedAt: string; competencyResults: EvaluationResult["competencyResults"] }[];
   loading: boolean;
 }
 
@@ -30,7 +31,7 @@ function getStatus(gap: number) {
   return { label: "Development needed", className: "border-warning/20 bg-warning/10 text-warning", Icon: Target };
 }
 
-export default function ResultsView({ data, onGenerateRoadmap, onStartReassessment, loading }: Props) {
+export default function ResultsView({ data, onGenerateRoadmap, onStartReassessment, assessmentHistory, loading }: Props) {
   const competencyResults = data.competencyResults ?? [];
   const categorySummaries = data.categorySummaries ?? [];
   const priorityGaps = data.priorityGaps ?? competencyResults.filter((item) => item.gap > 0);
@@ -305,7 +306,7 @@ export default function ResultsView({ data, onGenerateRoadmap, onStartReassessme
             </Card>
           )}
         </section>
-        <CompetencyPassport />
+        <CompetencyPassport currentResults={data} history={assessmentHistory} />
 
         <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 sm:flex-row">
           <div>
