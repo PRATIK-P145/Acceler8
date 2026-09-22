@@ -264,7 +264,47 @@ export default function ResultsView({ data, onGenerateRoadmap, loading }: Props)
           )}
         </section>
 
-        <section className="mb-8">\n          <div className="mb-4">\n            <h2 className="text-lg font-display font-semibold text-foreground">Recommended Learning Resources</h2>\n            <p className="text-sm text-muted-foreground">Resources are matched to the highest-priority competency gaps and ordered around the learner’s current level.</p>\n          </div>\n          {learningResources.length > 0 ? (\n            <div className="grid gap-4 md:grid-cols-2">\n              {learningResources.map((resource) => {\n                const gap = priorityGaps.find((item) => item.competency === resource.competency);\n                return (\n                  <Card key={resource.id} className="border-border/60 bg-background shadow-sm">\n                    <CardContent className="p-5">\n                      <div className="flex items-start justify-between gap-3">\n                        <div>\n                          <Badge variant="outline" className="mb-2">{resource.category}</Badge>\n                          <h3 className="font-semibold text-foreground">{resource.title}</h3>\n                          <p className="mt-1 text-xs text-muted-foreground">{resource.provider} · {resource.duration} · Suggested level {resource.level}/5</p>\n                        </div>\n                        {gap && <Badge variant="outline" className="shrink-0 border-destructive/20 bg-destructive/10 text-destructive">Gap {gap.gap}</Badge>}\n                      </div>\n                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{resource.description}</p>\n                      <Button asChild variant="outline" className="mt-4 w-full justify-between">\n                        <a href={resource.url} target="_blank" rel="noopener noreferrer">\n                          Open iGOT learning catalogue\n                          <ExternalLink className="h-4 w-4" />\n                        </a>\n                      </Button>\n                    </CardContent>\n                  </Card>\n                );\n              })}\n            </div>\n          ) : (\n            <Card className="border-success/20 bg-success/5"><CardContent className="p-5 text-sm text-success">No additional resources are required because the assessed competencies currently meet the defined role requirements.</CardContent></Card>\n          )}\n        </section>\n        <CompetencyPassport />
+        <section className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-display font-semibold text-foreground">Recommended Learning Resources</h2>
+            <p className="text-sm text-muted-foreground">Resources are matched to the highest-priority competency gaps and ordered around the learner’s current level.</p>
+          </div>
+          {learningResources.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {learningResources.map((resource) => {
+                const gap = priorityGaps.find((item) => item.competency === resource.competency);
+                return (
+                  <Card key={resource.id} className="border-border/60 bg-background shadow-sm">
+                    <CardContent className="p-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <Badge variant="outline" className="mb-2">{resource.category}</Badge>
+                          <h3 className="font-semibold text-foreground">{resource.title}</h3>
+                          <p className="mt-1 text-xs text-muted-foreground">{resource.provider} · {resource.duration} · Suggested level {resource.level}/5</p>
+                        </div>
+                        {gap && <Badge variant="outline" className="shrink-0 border-destructive/20 bg-destructive/10 text-destructive">Gap {gap.gap}</Badge>}
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-muted-foreground">{resource.description}</p>
+                      <Button asChild variant="outline" className="mt-4 w-full justify-between">
+                        <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                          Open iGOT learning catalogue
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card className="border-success/20 bg-success/5">
+              <CardContent className="p-5 text-sm text-success">
+                No additional resources are required because the assessed competencies currently meet the defined role requirements.
+              </CardContent>
+            </Card>
+          )}
+        </section>
+        <CompetencyPassport />
 
         <div className="mt-8 flex flex-col items-center justify-between gap-3 border-t border-border pt-6 sm:flex-row">
           <div>
