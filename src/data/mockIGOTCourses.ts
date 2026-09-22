@@ -2,7 +2,6 @@ import type { Course } from "@/types/skillFoundation";
 import { COMPETENCY_CATALOG, getCompetencyById } from "./roleCompetencyData";
 
 const IGOT_ALIGNED = "iGOT-aligned learning resource" as const;
-const CURATED = "Curated MVP catalogue" as const;
 
 const course = (
   id: string,
