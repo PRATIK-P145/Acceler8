@@ -2,11 +2,10 @@ import { EvaluationResult } from "@/hooks/useAssessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Award, CheckCircle2, CircleAlert, Target, TrendingUp } from "lucide-react";
+import { ArrowRight, Award, BookOpen, CheckCircle2, CircleAlert, ExternalLink, Target, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CompetencyPassport from "@/components/CompetencyPassport";
 import { getLearningRecommendations } from "@/data/learningRecommendations";
-import { BookOpen, ExternalLink } from "lucide-react";
 
 interface Props {
   data: EvaluationResult;
@@ -32,7 +31,8 @@ function getStatus(gap: number) {
 export default function ResultsView({ data, onGenerateRoadmap, loading }: Props) {
   const competencyResults = data.competencyResults ?? [];
   const categorySummaries = data.categorySummaries ?? [];
-  const priorityGaps = data.priorityGaps ?? competencyResults.filter((item) => item.gap > 0);\n  const learningRecommendations = getLearningRecommendations(priorityGaps);
+  const priorityGaps = data.priorityGaps ?? competencyResults.filter((item) => item.gap > 0);
+  const learningRecommendations = getLearningRecommendations(priorityGaps);
 
   return (
     <div className="min-h-screen bg-muted/30">
