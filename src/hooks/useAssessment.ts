@@ -111,7 +111,26 @@ export function useAssessment() {
         role: info.role,
         competencies,
       });
-      setQuestions(data.questions);
+
+      const generatedQuestions = Array.isArray(data.questions) ? data.questions : [];
+      const categories = ["Statistical", "Technical", "Digital Governance", "Behavioural & Managerial"];
+      const validAssessment =
+        generatedQuestions.length === 12 &&
+        categories.every((category) => generatedQuestions.filter((q: AssessmentQuestion) => q.category === category).length === 3) &&
+        generatedQuestions.every((q: AssessmentQuestion) =>
+          typeof q.question === "string" &&
+          Array.isArray(q.options) &&
+          q.options.length === 4 &&
+          ["A", "B", "C", "D"].includes(q.correct_answer) &&
+          typeof q.competency === "string" &&
+          typeof q.requiredLevel === "number"
+        );
+
+      if (!validAssessment) {
+        throw new Error("Assessment generation returned an incomplete or invalid question set. Please retry.");
+      }
+
+      setQuestions(generatedQuestions);
       setStep("quiz");
     } catch (e: any) {
       setError(e.message);
