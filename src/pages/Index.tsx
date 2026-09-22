@@ -12,6 +12,7 @@ const Index = () => {
     userInfo,
     questions,
     evaluationResult,
+    assessmentHistory,
     roadmap,
     loading,
     error,
@@ -35,7 +36,7 @@ const Index = () => {
       return <QuizView questions={questions} onSubmit={submitAnswers} loading={loading} topic={userInfo?.role || ""} />;
     case "results":
       return evaluationResult ? (
-        <ResultsView data={evaluationResult} onGenerateRoadmap={generateRoadmap} onStartReassessment={startReassessment} loading={loading} />
+        <ResultsView data={evaluationResult} onGenerateRoadmap={generateRoadmap} onStartReassessment={startReassessment} assessmentHistory={assessmentHistory} loading={loading} />
       ) : null;
     case "roadmap":
       return roadmap ? <RoadmapView roadmap={roadmap} onRestart={restart} onBackToResults={backToResults} onStartReassessment={startReassessment} /> : null;
