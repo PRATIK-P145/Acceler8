@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Award, CheckCircle2, CircleAlert, Target, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CompetencyPassport from "@/components/CompetencyPassport";
+import { getLearningRecommendations } from "@/data/learningRecommendations";
+import { BookOpen, ExternalLink } from "lucide-react";
 
 interface Props {
   data: EvaluationResult;
@@ -30,7 +32,7 @@ function getStatus(gap: number) {
 export default function ResultsView({ data, onGenerateRoadmap, loading }: Props) {
   const competencyResults = data.competencyResults ?? [];
   const categorySummaries = data.categorySummaries ?? [];
-  const priorityGaps = data.priorityGaps ?? competencyResults.filter((item) => item.gap > 0);
+  const priorityGaps = data.priorityGaps ?? competencyResults.filter((item) => item.gap > 0);\n  const learningRecommendations = getLearningRecommendations(priorityGaps);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -193,6 +195,72 @@ export default function ResultsView({ data, onGenerateRoadmap, loading }: Props)
             </CardContent>
           </Card>
         </div>
+
+        <section className="mb-8">
+          <div className="mb-4">
+            <h2 className="text-lg font-display font-semibold text-foreground">Personalized Learning Recommendations</h2>
+            <p className="text-sm text-muted-foreground">
+              Targeted next steps generated directly from the competency gaps identified in this assessment.
+            </p>
+          </div>
+
+          {learningRecommendations.length > 0 ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {learningRecommendations.map((item) => (
+                <Card key={item.competency} className="border-border/60 bg-background shadow-sm">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                          <BookOpen className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">{item.competency}</CardTitle>
+                          <p className="mt-1 text-xs text-muted-foreground">{item.category}</p>
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="shrink-0 border-destructive/20 bg-destructive/10 text-destructive">
+                        Gap {item.gap}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3 rounded-lg bg-muted/40 p-3 text-xs">
+                      <div>
+                        <p className="text-muted-foreground">Current</p>
+                        <p className="mt-1 font-semibold text-foreground">Level {item.currentLevel}/5</p>
+                      </div>
+                      <div>
+                        <p className="text-muted-foreground">Required</p>
+                        <p className="mt-1 font-semibold text-foreground">Level {item.requiredLevel}/5</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Learning focus</p>
+                      <p className="mt-1 text-sm leading-6 text-foreground">{item.focus}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recommended next action</p>
+                      <p className="mt-1 text-sm leading-6 text-muted-foreground">{item.action}</p>
+                    </div>
+                    <Button asChild variant="outline" className="w-full justify-between">
+                      <a href={item.iGotUrl} target="_blank" rel="noopener noreferrer">
+                        Explore learning on iGOT Karmayogi
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border-success/20 bg-success/5">
+              <CardContent className="p-5 text-sm text-success">
+                No learning recommendations are required because all assessed competencies currently meet the defined role requirements.
+              </CardContent>
+            </Card>
+          )}
+        </section>
 
         <CompetencyPassport />
 
