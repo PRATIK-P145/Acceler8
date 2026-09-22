@@ -1,17 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowRight, Award, BookOpen, ClipboardCheck, RefreshCw, Target, TrendingUp } from "lucide-react";
+import type { CompetencyResult, EvaluationResult } from "@/hooks/useAssessment";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-interface Props {
-  onGenerateRoadmap?: () => void;
+interface AssessmentSnapshot {
+  assessedAt: string;
+  competencyResults: CompetencyResult[];
 }
 
-const DEMO_DATA = [
-  { competency: "Sampling", initial: 2, learning: 3, reassessed: 3, target: 4 },
-  { competency: "SQL", initial: 2, learning: 3, reassessed: 3, target: 3 },
-  { competency: "Data Visualization", initial: 3, learning: 4, reassessed: 4, target: 4 },
-];
+interface Props {
+  currentResults: EvaluationResult;
+  history: AssessmentSnapshot[];
+}
 
 const timeline = [
   { title: "Initial Assessment", description: "Establish current competency levels.", Icon: ClipboardCheck },
@@ -20,7 +21,16 @@ const timeline = [
   { title: "Updated Competency", description: "Refresh the competency profile and identify the next gap.", Icon: TrendingUp },
 ];
 
-export default function CompetencyPassport({ onGenerateRoadmap }: Props) {
+export default function CompetencyPassport({ currentResults, history }: Props) {
+  const current = currentResults.competencyResults ?? [];
+  const previous = history.length > 1 ? history[history.length - 2]?.competencyResults ?? [] : [];
+  const previousByCompetency = new Map(previous.map((item) => [item.competency, item]));
+  const hasPrevious = previous.length > 0;
+  const improvedCount = hasPrevious
+    ? current.filter((item) => item.currentLevel > (previousByCompetency.get(item.competency)?.currentLevel ?? item.currentLevel)).length
+    : 0;
+  const meetingRequirementCount = current.filter((item) => item.gap === 0).length;
+
   return (
     <section className="mt-8">
       <Card className="overflow-hidden border-border/60 bg-background shadow-sm">
@@ -35,15 +45,17 @@ export default function CompetencyPassport({ onGenerateRoadmap }: Props) {
                 A continuous development view showing how competency levels can be updated as an official learns and is reassessed.
               </p>
             </div>
-            <Badge variant="outline" className="w-fit border-warning/30 bg-warning/10 text-warning">
-              Demo progression
+            <Badge variant="outline" className="w-fit border-primary/20 bg-primary/5 text-primary">
+              {hasPrevious ? "Live progress" : "Baseline profile"}
             </Badge>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-7 p-5 md:p-6">
-          <div className="rounded-lg border border-warning/20 bg-warning/5 p-3 text-xs leading-5 text-muted-foreground">
-            <strong className="text-foreground">Demo / historical values:</strong> The progression below is illustrative for the MVP presentation. It is not retrieved from a previous assessment or historical database.
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-lg border border-border p-4"><p className="text-xs uppercase tracking-wide text-muted-foreground">Assessments</p><p className="mt-1 text-2xl font-bold text-foreground">{history.length}</p><p className="text-xs text-muted-foreground">Recorded in this session</p></div>
+            <div className="rounded-lg border border-border p-4"><p className="text-xs uppercase tracking-wide text-muted-foreground">Meeting requirement</p><p className="mt-1 text-2xl font-bold text-foreground">{meetingRequirementCount}/{current.length}</p><p className="text-xs text-muted-foreground">Current competencies</p></div>
+            <div className="rounded-lg border border-border p-4"><p className="text-xs uppercase tracking-wide text-muted-foreground">Improved</p><p className="mt-1 text-2xl font-bold text-foreground">{improvedCount}</p><p className="text-xs text-muted-foreground">{hasPrevious ? "Since previous assessment" : "Available after reassessment"}</p></div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-4">
@@ -68,8 +80,8 @@ export default function CompetencyPassport({ onGenerateRoadmap }: Props) {
           <div>
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h3 className="text-base font-semibold text-foreground">Illustrative competency progression</h3>
-                <p className="text-xs text-muted-foreground">Level 1 = foundational · Level 5 = advanced</p>
+                <h3 className="text-base font-semibold text-foreground">Current competency profile</h3>
+                <p className="text-xs text-muted-foreground">Level 1 = foundational · Level 5 = advanced · {history.length} assessment{history.length === 1 ? "" : "s"} recorded</p>
               </div>
               <div className="hidden items-center gap-2 text-xs text-muted-foreground sm:flex">
                 <Target className="h-3.5 w-3.5" /> Target level
@@ -77,40 +89,47 @@ export default function CompetencyPassport({ onGenerateRoadmap }: Props) {
             </div>
 
             <div className="space-y-4">
-              {DEMO_DATA.map((item) => (
-                <div key={item.competency} className="rounded-lg border border-border p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <span className="text-sm font-semibold text-foreground">{item.competency}</span>
-                    <span className="text-xs text-muted-foreground">
-                      Level {item.initial} → {item.reassessed} · Target {item.target}
-                    </span>
+              {current.map((item) => {
+                const previousItem = previousByCompetency.get(item.competency);
+                const change = previousItem ? item.currentLevel - previousItem.currentLevel : 0;
+                return (
+                  <div key={item.competency} className="rounded-lg border border-border p-4">
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <span className="text-sm font-semibold text-foreground">{item.competency}</span>
+                        <p className="text-xs text-muted-foreground">{item.category} · Required L{item.requiredLevel} · Gap {item.gap}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-sm font-bold text-foreground">Level {item.currentLevel}/5</span>
+                        {hasPrevious && previousItem && <p className={change > 0 ? "text-xs font-semibold text-success" : change < 0 ? "text-xs font-semibold text-destructive" : "text-xs text-muted-foreground"}>{change > 0 ? "↑ +" + change : change < 0 ? "↓ " + change : "→ Maintained"}</p>}
+                      </div>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-muted">
+                      <div className="h-full rounded-full bg-primary transition-all" style={{ width: item.currentLevel * 20 + "%" }} />
+                    </div>
+                    <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+                      <span>{previousItem ? "Previous: L" + previousItem.currentLevel : "Baseline assessment"}</span>
+                      <span>Current: L{item.currentLevel}</span>
+                      <span>Required: L{item.requiredLevel}</span>
+                    </div>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-primary" style={{ width: (item.reassessed * 20) + "%" }} />
-                  </div>
-                  <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
-                    <span>Initial: L{item.initial}</span>
-                    <span>After learning: L{item.learning}</span>
-                    <span>Reassessment: L{item.reassessed}</span>
-                    <span>Target: L{item.target}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="mt-6 h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={[
-                  { stage: "Initial", Sampling: 2, SQL: 2, "Data Visualization": 3 },
-                  { stage: "Reassessment", Sampling: 3, SQL: 3, "Data Visualization": 4 },
-                  { stage: "Target", Sampling: 4, SQL: 3, "Data Visualization": 4 },
+                  { stage: "Initial", ...Object.fromEntries((history[0]?.competencyResults ?? []).slice(0, 3).map((item) => [item.competency, item.currentLevel])) },
+                  { stage: "Current", ...Object.fromEntries(current.slice(0, 3).map((item) => [item.competency, item.currentLevel])) },
+                  { stage: "Required", ...Object.fromEntries(current.slice(0, 3).map((item) => [item.competency, item.requiredLevel])) },
                 ]}>
                   <XAxis dataKey="stage" />
                   <YAxis domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="Sampling" stroke="hsl(var(--primary))" strokeWidth={2} dot />
-                  <Line type="monotone" dataKey="SQL" stroke="hsl(var(--accent))" strokeWidth={2} dot />
-                  <Line type="monotone" dataKey="Data Visualization" stroke="hsl(var(--success))" strokeWidth={2} dot />
+                  {current.slice(0, 3).map((item) => (
+                    <Line key={item.competency} type="monotone" dataKey={item.competency} stroke="hsl(var(--primary))" strokeWidth={2} dot />
+                  ))}
                 </LineChart>
               </ResponsiveContainer>
             </div>
