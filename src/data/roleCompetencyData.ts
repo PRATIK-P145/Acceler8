@@ -89,8 +89,6 @@ export const ROLE_PROFILES: Role[] = [
       ["survey-design", 3, "High"],
       ["sampling", 4, "Core"],
       ["data-quality", 5, "Core"],
-      ["descriptive-statistics", 4, "Core"],
-      ["official-statistics-indicators", 4, "High"],
       ["python-data-analysis", 4, "Core"],
       ["sql-data-management", 4, "Core"],
       ["data-visualization", 4, "High"],
@@ -98,6 +96,8 @@ export const ROLE_PROFILES: Role[] = [
       ["metadata-standards", 3, "Supporting"],
       ["analytical-thinking", 4, "Core"],
       ["communication", 4, "High"],
+      ["decision-making", 3, "High"],
+      ["stakeholder-management", 3, "Supporting"],
     ],
   ),
   role(
@@ -117,7 +117,6 @@ export const ROLE_PROFILES: Role[] = [
       ["information-management", 4, "High"],
       ["communication", 5, "Core"],
       ["decision-making", 4, "Core"],
-      ["stakeholder-management", 4, "High"],
     ],
   ),
   role(
@@ -136,7 +135,6 @@ export const ROLE_PROFILES: Role[] = [
       ["digital-service-governance", 4, "High"],
       ["information-management", 4, "High"],
       ["stakeholder-management", 4, "High"],
-      ["project-management", 4, "Core"],
       ["communication", 4, "High"],
     ],
   ),
