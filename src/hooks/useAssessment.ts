@@ -33,6 +33,11 @@ export interface CategorySummary {
   competenciesAssessed: number;
 }
 
+export interface AssessmentSnapshot {
+  assessedAt: string;
+  competencyResults: CompetencyResult[];
+}
+
 export interface EvaluationResult {
   userInfo: OfficialProfile;
   results: QuestionResult[];
@@ -79,6 +84,7 @@ export function useAssessment() {
   const [userInfo, setUserInfo] = useState<OfficialProfile | null>(null);
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
+  const [assessmentHistory, setAssessmentHistory] = useState<AssessmentSnapshot[]>([]);
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -252,6 +258,10 @@ export function useAssessment() {
       };
 
       setEvaluationResult(data);
+      setAssessmentHistory((previous) => [
+        ...previous,
+        { assessedAt: new Date().toISOString(), competencyResults: data.competencyResults },
+      ]);
       setStep("results");
     } catch (e: any) {
       setError(e.message);
@@ -292,6 +302,7 @@ export function useAssessment() {
     setUserInfo(null);
     setQuestions([]);
     setEvaluationResult(null);
+    setAssessmentHistory([]);
     setRoadmap(null);
     setError(null);
   }, []);
@@ -301,6 +312,7 @@ export function useAssessment() {
     userInfo,
     questions,
     evaluationResult,
+    assessmentHistory,
     roadmap,
     loading,
     error,
