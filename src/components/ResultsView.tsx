@@ -2,7 +2,7 @@ import { EvaluationResult } from "@/hooks/useAssessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight, Award, BookOpen, CheckCircle2, CircleAlert, ExternalLink, Target, TrendingUp } from "lucide-react";
+import { ArrowRight, Award, BookOpen, CheckCircle2, CircleAlert, ExternalLink, Target, TrendingUp, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CompetencyPassport from "@/components/CompetencyPassport";
 import { getLearningRecommendations } from "@/data/learningRecommendations";
@@ -11,6 +11,7 @@ import { getLearningResourcesForGaps } from "@/data/learningResourceData";
 interface Props {
   data: EvaluationResult;
   onGenerateRoadmap: () => void;
+  onStartReassessment: () => void;
   loading: boolean;
 }
 
@@ -29,7 +30,7 @@ function getStatus(gap: number) {
   return { label: "Development needed", className: "border-warning/20 bg-warning/10 text-warning", Icon: Target };
 }
 
-export default function ResultsView({ data, onGenerateRoadmap, loading }: Props) {
+export default function ResultsView({ data, onGenerateRoadmap, onStartReassessment, loading }: Props) {
   const competencyResults = data.competencyResults ?? [];
   const categorySummaries = data.categorySummaries ?? [];
   const priorityGaps = data.priorityGaps ?? competencyResults.filter((item) => item.gap > 0);
@@ -311,9 +312,14 @@ export default function ResultsView({ data, onGenerateRoadmap, loading }: Props)
             <p className="text-sm font-semibold text-foreground">Ready to address the identified gaps?</p>
             <p className="text-xs text-muted-foreground">Generate a personalized learning pathway from this profile.</p>
           </div>
-          <Button onClick={onGenerateRoadmap} disabled={loading} className="gradient-primary text-primary-foreground">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button onClick={onStartReassessment} disabled={loading} variant="outline">
+              <RefreshCw className="mr-2 h-4 w-4" />Reassess Competencies
+            </Button>
+            <Button onClick={onGenerateRoadmap} disabled={loading} className="gradient-primary text-primary-foreground">
             {loading ? <><span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground" />Generating Roadmap...</> : <>Generate Learning Roadmap<ArrowRight className="ml-2 h-4 w-4" /></>}
-          </Button>
+            </Button>
+          </div>
         </div>
       </div>
     </div>
