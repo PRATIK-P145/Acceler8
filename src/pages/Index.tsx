@@ -18,6 +18,8 @@ const Index = () => {
     startAssessment,
     submitAnswers,
     generateRoadmap,
+    startReassessment,
+    backToResults,
     restart,
   } = useAssessment();
 
@@ -29,13 +31,14 @@ const Index = () => {
     case "form":
       return <UserInfoForm onSubmit={startAssessment} loading={loading} />;
     case "quiz":
+    case "reassessment":
       return <QuizView questions={questions} onSubmit={submitAnswers} loading={loading} topic={userInfo?.role || ""} />;
     case "results":
       return evaluationResult ? (
-        <ResultsView data={evaluationResult} onGenerateRoadmap={generateRoadmap} loading={loading} />
+        <ResultsView data={evaluationResult} onGenerateRoadmap={generateRoadmap} onStartReassessment={startReassessment} loading={loading} />
       ) : null;
     case "roadmap":
-      return roadmap ? <RoadmapView roadmap={roadmap} onRestart={restart} /> : null;
+      return roadmap ? <RoadmapView roadmap={roadmap} onRestart={restart} onBackToResults={backToResults} onStartReassessment={startReassessment} /> : null;
     default:
       return null;
   }
