@@ -1,6 +1,5 @@
 import type { AssessmentQuestion, CompetencyCategory } from "@/types/igot";
-import { getCompetencyById } from "@/data/roleCompetencyData";
-import type { RoleCompetency } from "@/types/skillFoundation";
+
 
 const CATEGORIES: CompetencyCategory[] = [
   "Statistical",
@@ -326,12 +325,7 @@ const QUESTION_BANK: Record<string, QuestionSpec> = {
   },
 };
 
-function buildQuestion(roleCompetency: RoleCompetency): AssessmentQuestion {
-  const competency = getCompetencyById(roleCompetency.competency);
-  if (!competency) {
-    throw new Error(`Unknown competency in assessment generation: ${roleCompetency.competency}`);
-  }
-
+function buildQuestion(competency: { name: string; category: CompetencyCategory; requiredLevel: number }): AssessmentQuestion {
   const spec = QUESTION_BANK[competency.name];
   if (!spec) {
     throw new Error(`No deterministic assessment question defined for competency: ${competency.name}`);
@@ -340,13 +334,13 @@ function buildQuestion(roleCompetency: RoleCompetency): AssessmentQuestion {
   return {
     competency: competency.name,
     category: competency.category,
-    requiredLevel: roleCompetency.requiredLevel,
+    requiredLevel: competency.requiredLevel,
     ...spec,
   };
 }
 
 export function generateMockAssessmentQuestions(
-  competencies: RoleCompetency[],
+  competencies: Array<{ name: string; category: CompetencyCategory; requiredLevel: number }>,
 ): AssessmentQuestion[] {
   const questions = competencies.map(buildQuestion);
   const counts = Object.fromEntries(
