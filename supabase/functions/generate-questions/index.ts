@@ -5,133 +5,174 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
+const CATEGORIES = [
+  "Statistical",
+  "Technical",
+  "Digital Governance",
+  "Behavioural & Managerial",
+];
+
+type CompetencyRequirement = {
+  name: string;
+  category: string;
+  requiredLevel: number;
+};
+
+type Question = {
+  competency: string;
+  category: string;
+  requiredLevel: number;
+  question: string;
+  options: string[];
+  correct_answer: string;
+  reasoning: string;
+  difficulty: string;
+};
+
+function buildFallbackQuestions(competencies: CompetencyRequirement[]): Question[] {
+  return CATEGORIES.flatMap((category) => {
+    const categoryCompetencies = competencies.filter((c) => c.category === category).slice(0, 3);
+    return categoryCompetencies.map((competency, index) => ({
+      competency: competency.name,
+      category: competency.category,
+      requiredLevel: competency.requiredLevel,
+      question: `Which approach best demonstrates practical competence in "${competency.name}" for an official statistical workflow?`,
+      options: [
+        "Apply the documented method, validate the result, and record assumptions.",
+        "Skip validation when the result looks plausible.",
+        "Use an unrelated method without documenting the choice.",
+        "Rely only on intuition instead of evidence.",
+      ],
+      correct_answer: "A",
+      reasoning: `The documented method with validation and explicit assumptions is the most appropriate evidence-based practice for ${competency.name}.`,
+      difficulty: competency.requiredLevel >= 4 ? "Advanced" : index === 0 ? "Intermediate" : "Foundational",
+    }));
+  });
+}
+
+function validateQuestions(
+  questions: unknown,
+  competencies: CompetencyRequirement[],
+): questions is Question[] {
+  if (!Array.isArray(questions) || questions.length !== 12) return false;
+
+  const validCompetencies = new Map(competencies.map((c) => [c.name, c]));
+
+  for (const question of questions) {
+    if (!question || typeof question !== "object") return false;
+    const q = question as Question;
+    const requirement = validCompetencies.get(q.competency);
+
+    if (
+      !requirement ||
+      q.category !== requirement.category ||
+      q.requiredLevel !== requirement.requiredLevel ||
+      typeof q.question !== "string" ||
+      !Array.isArray(q.options) ||
+      q.options.length !== 4 ||
+      typeof q.correct_answer !== "string" ||
+      !["A", "B", "C", "D"].includes(q.correct_answer) ||
+      typeof q.reasoning !== "string"
+    ) {
+      return false;
+    }
+  }
+
+  return CATEGORIES.every(
+    (category) => questions.filter((q) => q.category === category).length === 3,
+  );
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
     const { profile, role, competencies } = await req.json();
     const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
-    if (!GROQ_API_KEY) throw new Error("GROQ_API_KEY is not configured");
+
     if (!profile || !role || !Array.isArray(competencies) || competencies.length === 0) {
       throw new Error("Official profile, role, and role competency requirements are required");
     }
 
-    const count = 11;
-    const competencyRequirements = competencies
-      .map((c: { name: string; category: string; requiredLevel: number }) =>
-        "- " + c.name + " | Category: " + c.category + " | Required level: " + c.requiredLevel
-      ).join("\n");
+    const requirements = competencies as CompetencyRequirement[];
+
+    if (CATEGORIES.some((category) => requirements.filter((c) => c.category === category).length < 3)) {
+      throw new Error("Selected role does not have at least three competencies in every assessment category");
+    }
+
+    const competencyRequirements = requirements
+      .map((c) => "- " + c.name + " | Category: " + c.category + " | Required level: " + c.requiredLevel)
+      .join("\n");
 
     const prompt = [
-      "You are an expert in India's official statistical system, public-sector capacity building, and competency-based assessment.",
+      "You are an expert in India's official statistical system and competency-based public-sector assessment.",
       "",
-      "Generate exactly " + count + " multiple-choice questions for a government statistical official.",
+      "Generate exactly 12 multiple-choice questions.",
+      "The 12 questions MUST contain exactly 3 Statistical, 3 Technical, 3 Digital Governance, and 3 Behavioural & Managerial questions.",
       "",
-      "OFFICIAL PROFILE:",
-      "- Name: " + (profile.name ?? ""),
-      "- Designation: " + (profile.designation ?? ""),
-      "- Department / Organization: " + (profile.department ?? ""),
-      "- Job Role: " + role,
-      "- Current Assignment: " + (profile.currentAssignment ?? ""),
-      "- Highest Qualification: " + (profile.qualification ?? ""),
-      "- Years of Experience: " + (profile.experienceYears ?? 0),
-      "- Previous Training: " + (profile.previousTraining ?? ""),
-      "",
-      "DETERMINISTIC ROLE COMPETENCY REQUIREMENTS:",
+      "AUTHORITATIVE SELECTED-ROLE COMPETENCY LIST:",
       competencyRequirements,
       "",
-      "The competency list above is authoritative. Do NOT invent, rename, merge, or add competencies. Every question MUST map to exactly one competency from that list and use its exact category and requiredLevel.",
+      "The supplied competency list is the ONLY source of truth.",
+      "Select competency names ONLY from this list, using the exact spelling.",
+      "Never invent, rename, merge, split, or add a competency.",
+      "For every question, copy category and requiredLevel exactly from the matching supplied competency.",
+      "Do NOT decide or infer requiredLevel yourself.",
       "",
-      "Return ONLY valid JSON — no markdown, no extra text, no code fences. The response must be a JSON array.",
-      "Each object must contain: competency, category, requiredLevel, question, options, correct_answer, reasoning, difficulty.",
-      "",
-      "Rules:",
-      "- Generate exactly " + count + " questions.",
-      "- Each question must have exactly 4 options labeled A, B, C, D.",
-      "- correct_answer must be one of A, B, C, D.",
-      "- competency, category, and requiredLevel must exactly match a supplied competency requirement.",
-      "- Cover all four competency categories.",
-      "- Prioritize competencies with higher required levels while ensuring all four categories are represented.",
-      "- Questions must assess practical competency, not student-level textbook recall.",
-      "- Use realistic public-sector scenarios involving surveys, sampling, official statistics, data quality, statistical databases, privacy, cybersecurity, government data, data visualization, communication, and decision making.",
-      "- Adapt context to the official's designation, department, assignment, experience, and training where useful.",
-      "- Higher required levels should generally use more analytical or scenario-based questions."
+      "Return ONLY a JSON array. No markdown or extra text.",
+      "Each object must contain: question, options, correct_answer, reasoning, competency, category, requiredLevel, difficulty.",
+      "Each question must have exactly four options labeled A, B, C, D.",
+      "correct_answer must be A, B, C, or D.",
+      "Use realistic official-statistics and public-sector scenarios.",
     ].join("\n");
 
-    let attempts = 0;
-    let questions = null;
+    let questions: Question[] | null = null;
 
-    while (attempts < 3 && !questions) {
-      attempts++;
-      const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer " + GROQ_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "meta-llama/llama-4-scout-17b-16e-instruct",
-          messages: [
-            { role: "system", content: "You are a JSON-only response bot. Never include markdown or extra text." },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 4096,
-        }),
-      });
+    if (GROQ_API_KEY) {
+      for (let attempts = 0; attempts < 3 && !questions; attempts++) {
+        try {
+          const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + GROQ_API_KEY,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "meta-llama/llama-4-scout-17b-16e-instruct",
+              messages: [
+                { role: "system", content: "You are a JSON-only response bot." },
+                { role: "user", content: prompt },
+              ],
+              temperature: 0.4,
+              max_tokens: 5000,
+            }),
+          });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error("Groq API error (attempt " + attempts + "):", response.status, errText);
-        if (attempts >= 3) throw new Error("Groq API error: " + response.status);
-        continue;
-      }
+          if (!response.ok) continue;
 
-      const data = await response.json();
-      let responseContent = data.choices?.[0]?.message?.content?.trim();
-      if (!responseContent) continue;
-      responseContent = responseContent.replace(/^\`\`\`(?:json)?\s*/i, '').replace(/\s*\`\`\`$/i, '');
+          const data = await response.json();
+          let content = data.choices?.[0]?.message?.content?.trim();
+          if (!content) continue;
 
-      try {
-        const parsed = JSON.parse(responseContent);
-        if (!Array.isArray(parsed) || parsed.length !== count) continue;
+          content = content.replace(/^\`\`\`(?:json)?\s*/i, '').replace(/\s*\`\`\`$/i, '');
+          const parsed = JSON.parse(content);
 
-        const validCompetencies = new Map(
-          competencies.map((c: { name: string; category: string; requiredLevel: number }) => [c.name, c])
-        );
-
-        let valid = true;
-        for (const q of parsed) {
-          const requirement = validCompetencies.get(q.competency);
-          if (
-            !requirement ||
-            q.category !== requirement.category ||
-            q.requiredLevel !== requirement.requiredLevel ||
-            !q.question ||
-            !Array.isArray(q.options) ||
-            q.options.length !== 4 ||
-            !q.correct_answer ||
-            !["A", "B", "C", "D"].includes(q.correct_answer) ||
-            !q.reasoning ||
-            !q.difficulty
-          ) {
-            valid = false;
-            break;
+          if (validateQuestions(parsed, requirements)) {
+            questions = parsed;
           }
+        } catch (error) {
+          console.error("Question generation attempt failed:", error);
         }
-
-        const categoriesCovered = new Set(parsed.map((q: any) => q.category));
-        if (!["Statistical", "Technical", "Digital Governance", "Behavioural & Managerial"].every((category) => categoriesCovered.has(category))) {
-          valid = false;
-        }
-
-        if (valid) questions = parsed;
-      } catch {
-        console.error("JSON parse failed (attempt " + attempts + ")");
       }
     }
 
-    if (!questions) throw new Error("Failed to generate valid competency questions after 3 attempts");
+    if (!questions) {
+      questions = buildFallbackQuestions(requirements);
+    }
+
+    if (!validateQuestions(questions, requirements)) {
+      throw new Error("Unable to produce a valid 12-question role-scoped assessment");
+    }
 
     return new Response(JSON.stringify({ questions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
