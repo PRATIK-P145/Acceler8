@@ -1,6 +1,10 @@
 import { useState } from "react";
 import type { OfficialProfile } from "@/types/igot";
-import { getSupportedRoles } from "@/data/competencyFramework";
+import {
+  ROLE_PROFILES,
+  getCompetenciesByCategory,
+} from "@/data/roleCompetencyData";
+import type { CompetencyCategory } from "@/types/skillFoundation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,31 +17,65 @@ interface Props {
   loading: boolean;
 }
 
+const CATEGORIES: CompetencyCategory[] = [
+  "Statistical",
+  "Technical",
+  "Digital Governance",
+  "Behavioural & Managerial",
+];
+
+const DESIGNATIONS = [
+  "Statistical Officer",
+  "Assistant Statistical Officer",
+  "Statistical Investigator",
+  "Data Analyst",
+  "Research Officer",
+  "IT / Systems Officer",
+  "Deputy Director",
+  "Other",
+];
+
+const DEPARTMENTS = [
+  "Directorate of Economics & Statistics",
+  "State Statistical Office",
+  "Ministry / Central Government Department",
+  "National Statistical Office",
+  "Government Data / IT Department",
+  "Other",
+];
+
+const EXPERIENCE_OPTIONS = [
+  { label: "0–2 years", value: "1" },
+  { label: "3–5 years", value: "4" },
+  { label: "6–10 years", value: "8" },
+  { label: "11–15 years", value: "13" },
+  { label: "15+ years", value: "16" },
+];
+
 export default function UserInfoForm({ onSubmit, loading }: Props) {
   const [form, setForm] = useState<OfficialProfile>({
-    name: "", designation: "", department: "", role: "",
-    currentAssignment: "", qualification: "", experienceYears: 0,
-    previousTraining: "",
+    name: "",
+    designation: "",
+    department: "",
+    role: "",
+    experienceYears: 0,
   });
-  const [experience, setExperience] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const update = (field: keyof OfficialProfile, value: string | number) => {
     setForm(prev => ({ ...prev, [field]: value }));
+    setErrors(prev => ({ ...prev, [field]: "" }));
   };
+
+  const selectedRole = ROLE_PROFILES.find(role => role.name === form.role);
 
   const validate = () => {
     const errs: Record<string, string> = {};
     if (!form.name.trim()) errs.name = "Full name is required";
     if (!form.designation.trim()) errs.designation = "Designation is required";
     if (!form.department.trim()) errs.department = "Department / organization is required";
-    if (!form.role.trim()) errs.role = "Job role is required";
-    if (!form.currentAssignment.trim()) errs.currentAssignment = "Current assignment is required";
-    if (!form.qualification.trim()) errs.qualification = "Highest qualification is required";
-    if (!experience || isNaN(Number(experience)) || Number(experience) < 0 || Number(experience) > 60) {
-      errs.experienceYears = "Enter valid experience (0-60 years)";
-    }
-    if (!form.previousTraining.trim()) errs.previousTraining = "Please mention relevant previous training";
+    if (!form.role) errs.role = "Job role is required";
+    if (!form.experienceYears) errs.experienceYears = "Years of experience is required";
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -45,18 +83,18 @@ export default function UserInfoForm({ onSubmit, loading }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onSubmit({ ...form, experienceYears: Number(experience) });
+    onSubmit(form);
   };
 
   return (
     <div className="min-h-screen gradient-surface flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-3xl">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl gradient-primary mb-4">
             <BriefcaseBusiness className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground">Competency Profile</h1>
-          <p className="text-muted-foreground mt-2">AI-powered competency assessment for public-sector professionals</p>
+          <p className="text-muted-foreground mt-2">Build your role-based competency profile and assessment.</p>
         </div>
 
         <Card className="shadow-lg border-border/50">
@@ -66,7 +104,7 @@ export default function UserInfoForm({ onSubmit, loading }: Props) {
               Professional Profile
             </CardTitle>
             <CardDescription>
-              Your professional profile helps the AI identify the competencies relevant to your role and create a personalized assessment.
+              Select your role and experience band. The assessment will be generated from that role's competency requirements.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -79,66 +117,81 @@ export default function UserInfoForm({ onSubmit, loading }: Props) {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="designation">Designation</Label>
-                  <Input id="designation" value={form.designation} onChange={e => update("designation", e.target.value)} placeholder="e.g., Statistical Officer" className="mt-1.5" />
+                  <Label>Designation</Label>
+                  <Select value={form.designation} onValueChange={value => update("designation", value)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select designation" /></SelectTrigger>
+                    <SelectContent>
+                      {DESIGNATIONS.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   {errors.designation && <p className="text-sm text-destructive mt-1">{errors.designation}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="department">Department / Organization</Label>
-                  <Input id="department" value={form.department} onChange={e => update("department", e.target.value)} placeholder="e.g., Directorate of Economics & Statistics" className="mt-1.5" />
+                  <Label>Department / Organisation</Label>
+                  <Select value={form.department} onValueChange={value => update("department", value)}>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select department / organisation" /></SelectTrigger>
+                    <SelectContent>
+                      {DEPARTMENTS.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   {errors.department && <p className="text-sm text-destructive mt-1">{errors.department}</p>}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="role">Job Role</Label>
+                  <Label>Job Role</Label>
                   <Select value={form.role} onValueChange={value => update("role", value)}>
-                    <SelectTrigger id="role" className="mt-1.5">
-                      <SelectValue placeholder="Select your job role" />
-                    </SelectTrigger>
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select your job role" /></SelectTrigger>
                     <SelectContent>
-                      {getSupportedRoles().map(role => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                      ))}
+                      {ROLE_PROFILES.map(role => <SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   {errors.role && <p className="text-sm text-destructive mt-1">{errors.role}</p>}
                 </div>
                 <div>
-                  <Label htmlFor="experience">Years of Experience</Label>
-                  <Input id="experience" type="number" value={experience} onChange={e => setExperience(e.target.value)} placeholder="e.g., 8" className="mt-1.5" min={0} max={60} />
+                  <Label>Years of Experience</Label>
+                  <Select
+                    value={form.experienceYears ? String(form.experienceYears) : ""}
+                    onValueChange={value => update("experienceYears", Number(value))}
+                  >
+                    <SelectTrigger className="mt-1.5"><SelectValue placeholder="Select experience band" /></SelectTrigger>
+                    <SelectContent>
+                      {EXPERIENCE_OPTIONS.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   {errors.experienceYears && <p className="text-sm text-destructive mt-1">{errors.experienceYears}</p>}
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="assignment">Current Assignment</Label>
-                <Input id="assignment" value={form.currentAssignment} onChange={e => update("currentAssignment", e.target.value)} placeholder="Describe your current responsibilities or assignment" className="mt-1.5" />
-                {errors.currentAssignment && <p className="text-sm text-destructive mt-1">{errors.currentAssignment}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="qualification">Highest Qualification</Label>
-                <Input id="qualification" value={form.qualification} onChange={e => update("qualification", e.target.value)} placeholder="e.g., M.Sc. Statistics, M.Tech. Data Science" className="mt-1.5" />
-                {errors.qualification && <p className="text-sm text-destructive mt-1">{errors.qualification}</p>}
-              </div>
-
-              <div>
-                <Label htmlFor="training">Previous Training</Label>
-                <Input id="training" value={form.previousTraining} onChange={e => update("previousTraining", e.target.value)} placeholder="Relevant courses, workshops, certifications, or departmental training" className="mt-1.5" />
-                {errors.previousTraining && <p className="text-sm text-destructive mt-1">{errors.previousTraining}</p>}
-              </div>
+              {selectedRole && (
+                <Card className="bg-muted/40 border-border">
+                  <CardHeader className="pb-3">
+                    <CardDescription>Selected Role</CardDescription>
+                    <CardTitle className="text-xl">{selectedRole.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {CATEGORIES.map(category => {
+                      const count = getCompetenciesByCategory(category, selectedRole.id).length;
+                      return (
+                        <div key={category} className="rounded-lg border bg-card p-4">
+                          <p className="text-sm font-medium text-muted-foreground">{category}</p>
+                          <p className="text-2xl font-bold mt-1">{count}</p>
+                          <p className="text-xs text-muted-foreground">competencies</p>
+                        </div>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              )}
 
               <Button type="submit" className="w-full gradient-primary text-primary-foreground font-semibold h-12 text-base" disabled={loading}>
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                    Building Profile...
+                    Building Assessment...
                   </span>
-                ) : (
-                  "Build My Competency Profile"
-                )}
+                ) : "Start Competency Assessment"}
               </Button>
             </form>
           </CardContent>
